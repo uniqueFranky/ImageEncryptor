@@ -98,93 +98,112 @@ class BaseChaosTransform(BaseEncryptor):
     def __init__(self):
         super().__init__()
         self.sys = chaos.ChaosSystem()
-        self.ops = [] # [(operation, times), (operation, times), ...]
+        self.ops = []
         self.total_steps = 0
     
     def add_chaos_map(self, map, initial):
         self.sys.add_mapping(map, inital=initial)
     
-    def add_operation(self, operation, times):
+    def add_operation(self, operation):
         if not isinstance(operation, BaseChaosOperation):
             print(f'{operation} not supported')
             return
-        self.ops.append((operation, times))
+        self.ops.append(operation)
         
     def encrypt(self, rgb):
         result = rgb.copy()
-        for (op, times) in self.ops:
-            for _ in range(times):
-                result = op(result, self.sys, reverse=False)
+        for op in self.ops:
+            result = op(result, self.sys, reverse=False)
         return result
     
     def decrypt(self, rgb):
         result = rgb.copy()
         self.total_steps = 0
-        for (op, times) in self.ops:
-            self.total_steps += times * op.get_cost(rgb)
+        for op in self.ops:
+            self.total_steps += op.get_cost(rgb)
         it = self.sys.get_reverse_iterator(self.total_steps)
-        for (op, times) in reversed(self.ops):
-            for _ in range(times):
-                result = op(result, it, reverse=True)
+        for op in reversed(self.ops):
+            result = op(result, it, reverse=True)
         return result
 
 
 class BaseChaosOperation:
+    def __init__(self, times=1):
+        self.times = times
+
     def __call__(cls, rgb, it: iter, reverse=False):
         pass
 
-    @classmethod
     def get_cost(cls, rgb):
         pass
 
 
 class RowShuffleOperation(BaseChaosOperation):
     def __call__(self, rgb, it: iter, reverse=False):
-        for dim in (range(rgb.shape[2]) if not reverse else reversed(range(rgb.shape[2]))):
-            x1 = utils.discrete(next(it)) % rgb.shape[0]
-            x2 = utils.discrete(next(it)) % rgb.shape[0]
-            rgb[[x1, x2], :, dim] = rgb[[x2, x1], :, dim]
+        for _ in range(self.times):
+            for dim in (range(rgb.shape[2]) if not reverse else reversed(range(rgb.shape[2]))):
+                x1 = utils.discrete(next(it)) % rgb.shape[0]
+                x2 = utils.discrete(next(it)) % rgb.shape[0]
+                rgb[[x1, x2], :, dim] = rgb[[x2, x1], :, dim]
         return rgb
 
-    @classmethod
-    def get_cost(cls, rgb):
-        return 2 * rgb.shape[2]
+    def get_cost(self, rgb):
+        return 2 * rgb.shape[2] * self.times
 
 
 class ColumnShuffleOperation(BaseChaosOperation):
     def __call__(self, rgb, it: iter, reverse=False):
-        for dim in (range(rgb.shape[2]) if not reverse else reversed(range(rgb.shape[2]))):
-            y1 = utils.discrete(next(it)) % rgb.shape[1]
-            y2 = utils.discrete(next(it)) % rgb.shape[1]
-            rgb[:, [y1, y2], dim] =rgb[:, [y2, y1], dim]
+        for _ in range(self.times):
+            for dim in (range(rgb.shape[2]) if not reverse else reversed(range(rgb.shape[2]))):
+                y1 = utils.discrete(next(it)) % rgb.shape[1]
+                y2 = utils.discrete(next(it)) % rgb.shape[1]
+                rgb[:, [y1, y2], dim] =rgb[:, [y2, y1], dim]
         return rgb
 
-    @classmethod
-    def get_cost(cls, rgb):
-        return 2 * rgb.shape[2]
+    def get_cost(self, rgb):
+        return 2 * rgb.shape[2] * self.times
 
 class DiffusionOperation(BaseChaosOperation):
     def __call__(self, rgb, it: iter, reverse=False):
         shape = rgb.shape
         flt = rgb.flatten()
-        
-        if not reverse:
-            for i in range(len(flt)):
-                if i == 0:
-                    flt[i] = (flt[i] + utils.discrete(next(it))) % 256
-                else:
-                    flt[i] = (flt[i - 1] + flt[i] + utils.discrete(next(it))) % 256
-        else:
-            for i in reversed(range(len(flt))):
-                if i == 0:
-                    flt[i] = (flt[i] - utils.discrete(next(it))) % 256
-                else:
-                    flt[i] = (flt[i] - flt[i - 1] - utils.discrete(next(it))) % 256
+        for _ in range(self.times):
+            if not reverse:
+                for i in range(len(flt)):
+                    if i == 0:
+                        flt[i] = (flt[i] + utils.discrete(next(it))) % 256
+                    else:
+                        flt[i] = (flt[i - 1] + flt[i] + utils.discrete(next(it))) % 256
+            else:
+                for i in reversed(range(len(flt))):
+                    if i == 0:
+                        flt[i] = (flt[i] - utils.discrete(next(it))) % 256
+                    else:
+                        flt[i] = (flt[i] - flt[i - 1] - utils.discrete(next(it))) % 256
         return flt.reshape(shape)
     
 
-    @classmethod
-    def get_cost(cls, rgb):
-        return rgb.shape[0] * rgb.shape[1] * rgb.shape[2]
+    def get_cost(self, rgb):
+        return rgb.shape[0] * rgb.shape[1] * rgb.shape[2] * self.times
 
     
+class CompositionalChaosOperation(BaseChaosOperation):
+    def __init__(self, op_list, times=1):
+        self.op_list = op_list
+        self.times = times
+    
+    def __call__(self, rgb, it: iter, reverse=False):
+        for _ in range(self.times):
+            if not reverse:
+                for op in self.op_list:
+                    rgb = op(rgb, it, reverse)
+            else:
+                for op in reversed(self.op_list):
+                    rgb = op(rgb, it, reverse)
+        return rgb
+
+    def get_cost(self, rgb):
+        cnt = 0
+        for op in self.op_list:
+            cnt += op.get_cost(rgb)
+        return cnt * self.times
