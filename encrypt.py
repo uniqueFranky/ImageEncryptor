@@ -2,6 +2,7 @@ import numpy as np
 import random
 import chaos
 import utils
+from registry import encryptor_registry, chaos_operation_registry
 
 class BaseEncryptor:
     def __init__(self):
@@ -14,6 +15,7 @@ class BaseEncryptor:
         pass
 
 
+@encryptor_registry.register('Arnold')
 class ArnoldTransform(BaseEncryptor):
     def __init__(self, a=1, b=1, shuffle_times=1):
         self.a = a
@@ -48,7 +50,8 @@ class ArnoldTransform(BaseEncryptor):
                     result[x, y, :] = rgb[i, j, :]
         return result
     
-    
+
+
 class DiscreteCosineTransform(BaseEncryptor):
     def __init__(self):
         super().__init__()
@@ -94,6 +97,7 @@ class DiscreteCosineTransform(BaseEncryptor):
             result[:, :, dim] = (new_layer.T).dot(old_layer).dot(new_layer)
         return result
 
+@encryptor_registry.register('BaseChaos')
 class BaseChaosTransform(BaseEncryptor):
     def __init__(self):
         super().__init__()
@@ -138,6 +142,7 @@ class BaseChaosOperation:
         pass
 
 
+@chaos_operation_registry.register('RowShuffle')
 class RowShuffleOperation(BaseChaosOperation):
     def __call__(self, rgb, it: iter, reverse=False):
         for _ in range(self.times):
@@ -151,6 +156,7 @@ class RowShuffleOperation(BaseChaosOperation):
         return 2 * rgb.shape[2] * self.times
 
 
+@chaos_operation_registry.register('ColumnShuffle')
 class ColumnShuffleOperation(BaseChaosOperation):
     def __call__(self, rgb, it: iter, reverse=False):
         for _ in range(self.times):
@@ -163,6 +169,8 @@ class ColumnShuffleOperation(BaseChaosOperation):
     def get_cost(self, rgb):
         return 2 * rgb.shape[2] * self.times
 
+
+@chaos_operation_registry.register('Diffusion')
 class DiffusionOperation(BaseChaosOperation):
     def __call__(self, rgb, it: iter, reverse=False):
         shape = rgb.shape
@@ -186,7 +194,8 @@ class DiffusionOperation(BaseChaosOperation):
     def get_cost(self, rgb):
         return rgb.shape[0] * rgb.shape[1] * rgb.shape[2] * self.times
 
-    
+
+@chaos_operation_registry.register('Compositional')
 class CompositionalChaosOperation(BaseChaosOperation):
     def __init__(self, op_list, times=1):
         self.op_list = op_list
@@ -207,3 +216,4 @@ class CompositionalChaosOperation(BaseChaosOperation):
         for op in self.op_list:
             cnt += op.get_cost(rgb)
         return cnt * self.times
+

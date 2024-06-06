@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import utils
+from registry import chaos_mapping_registry
 
 class BaseChaosMapping:
     def __call__(self, x):
@@ -9,6 +10,8 @@ class BaseChaosMapping:
     def __len__(self):
         pass
 
+
+@chaos_mapping_registry.register('Logistic')
 class LogisticMapping(BaseChaosMapping):
     def __init__(self, mu=0.5):
         self.mu = mu
@@ -20,6 +23,7 @@ class LogisticMapping(BaseChaosMapping):
         return 1
 
 
+@chaos_mapping_registry.register('Tent')
 class TentMapping(BaseChaosMapping):
     def __init__(self, p=0.5):
         self.p = p
@@ -31,6 +35,7 @@ class TentMapping(BaseChaosMapping):
         return 1
     
 
+@chaos_mapping_registry.register('Arnold')
 class ArnoldMapping(BaseChaosMapping):
     def __init__(self, a=1, b=1):
         self.a = a
@@ -47,7 +52,6 @@ class ArnoldMapping(BaseChaosMapping):
     
     def __len__(self):
         return 2
-
 
 class ChaosSystem:
     def __init__(self):
