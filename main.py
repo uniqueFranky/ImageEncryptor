@@ -36,5 +36,19 @@ def check_chaos():
     re = en.decrypt(cipher)
     utils.show_rgb(re)
 
+
+def check_classic_chaos():
+    en = encryptor_registry.build('ClassicChaos', row_shuffle_times=0, tent_initial=0.8)
+
+    path='img/Lenna.jpg'
+
+    rgb = utils.read_rgb(path)
+    cipher = en.encrypt(rgb)
+    utils.show_rgb(cipher)
+
+    re = en.decrypt(cipher)
+    utils.show_rgb(re)
+
+
 if __name__ == '__main__':
-    check_arnold()
+    check_classic_chaos()

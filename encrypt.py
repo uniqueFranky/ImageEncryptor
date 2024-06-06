@@ -2,7 +2,7 @@ import numpy as np
 import random
 import chaos
 import utils
-from registry import encryptor_registry, chaos_operation_registry
+from registry import encryptor_registry, chaos_operation_registry, chaos_mapping_registry
 
 class BaseEncryptor:
     def __init__(self):
@@ -129,6 +129,30 @@ class BaseChaosTransform(BaseEncryptor):
         for op in reversed(self.ops):
             result = op(result, it, reverse=True)
         return result
+
+
+@encryptor_registry.register('ClassicChaos')
+class ClassicChaosTransform(BaseChaosTransform):
+    def __init__(self, column_shuffle_times=3, row_shuffle_times=3, diffusion_times=3, compositional_times=3, 
+                 arnold_a=1, arnold_b=1, arnold_initial=[1.2, 2.5],
+                 tent_p=0.5, tent_initial=0.5):
+        super().__init__()
+
+        # init chaos operations
+        column_shuffle = chaos_operation_registry.build('ColumnShuffle', times=column_shuffle_times)
+        row_shuffle = chaos_operation_registry.build('RowShuffle', times=row_shuffle_times)
+        diffusion = chaos_operation_registry.build('Diffusion', times=diffusion_times)
+        compositional = chaos_operation_registry.build('Compositional', [column_shuffle, row_shuffle, diffusion], times=compositional_times)
+        self.add_operation(compositional)
+
+        # init chaos mappings
+        arnold = chaos_mapping_registry.build('Arnold', a=arnold_a, b=arnold_b)
+        self.add_chaos_map(arnold, initial=arnold_initial)
+
+        tent = chaos_mapping_registry.build('Tent', p=tent_p)
+        self.add_chaos_map(tent, initial=tent_initial)
+
+        
 
 
 class BaseChaosOperation:
