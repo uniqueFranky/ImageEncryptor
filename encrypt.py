@@ -5,6 +5,20 @@ import utils
 from registry import encryptor_registry, operation_registry, chaos_mapping_registry, transform_registry, sequence_registry
 import trans
 import operation
+import evaluate
+
+def before_encrypt(encrypt=True):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            t = evaluate.Timer()
+            ret = func(*args, **kwargs)
+            cost = t.stop()
+            print(f'{args[0].__class__.__name__} took {cost} seconds to {"encrypt" if encrypt else "decrypt"}.')
+            return ret
+        return wrapper
+    return decorator
+
+
 
 class BaseEncryptor:
     def __init__(self):
@@ -24,6 +38,7 @@ class ArnoldTransform(BaseEncryptor):
         self.b = b
         self.shuffle_times = shuffle_times
     
+    @before_encrypt(encrypt=True)
     def encrypt(self, rgb):
         N = rgb.shape[0]
         if rgb.shape[0] != rgb.shape[1]:
@@ -38,6 +53,7 @@ class ArnoldTransform(BaseEncryptor):
                     result[x, y, :] = rgb[i, j, :]
         return result
     
+    @before_encrypt(encrypt=False)
     def decrypt(self, rgb):
         N = rgb.shape[0]
         if rgb.shape[0] != rgb.shape[1]:
@@ -70,12 +86,14 @@ class BaseSequenceEncryptor(BaseEncryptor):
             return
         self.ops.append(op)
         
+    @before_encrypt(encrypt=True)
     def encrypt(self, rgb):
         result = rgb.copy()
         for op in self.ops:
             result = op(result, self.sys, reverse=False)
         return result
     
+    @before_encrypt(encrypt=False)
     def decrypt(self, rgb):
         result = rgb.copy()
         self.total_steps = 0

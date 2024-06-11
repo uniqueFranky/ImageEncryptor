@@ -1,6 +1,6 @@
 import utils
-from registry import encryptor_registry, operation_registry, chaos_mapping_registry, transform_registry, attacker_registry
-import trans, encrypt, operation, attack
+from registry import encryptor_registry, operation_registry, chaos_mapping_registry, transform_registry, attacker_registry, metric_registry
+import trans, encrypt, operation, attack, evaluate
 import numpy as np
 
 def check_random():
@@ -32,6 +32,10 @@ def check_chaos():
     utils.show_rgb(cipher)
     re = en.decrypt(cipher)
     utils.show_rgb(re)
+    utils.show_rgb(rgb)
+
+    mc = metric_registry.build('MSE')
+    print(f'Attack Loss: {mc(rgb, re)}')
 
 def check_chaos_trans():
     path = './img/Lenna.jpg'
@@ -48,6 +52,15 @@ def check_chaos_trans():
     utils.show_rgb(cipher)
     re = en.decrypt(cipher)
     utils.show_rgb(re)
+
+    mc = metric_registry.build('SSIM')
+    print(f'Attack Similarity: {mc(rgb, re)}')
+
+    mc = metric_registry.build('MSE')
+    print(f'Attack MSE: {mc(rgb, re)}')
+
+    mc = metric_registry.build('PSNR')
+    print(f'Attack PSNR: {mc(rgb, re)}')
 
 def check_random_trans():
     path = './img/Lenna.jpg'
@@ -68,6 +81,7 @@ def check_random_trans():
     re = en.decrypt(cipher)
     utils.show_rgb(re)
 
+
 def check_cos():
     path = './img/Lenna.jpg'
     rgb = utils.read_rgb(path)
@@ -85,6 +99,8 @@ def check_cos():
     utils.show_rgb(re)
 
 if __name__ == '__main__':
-    check_cos()
+    # 设置忽略溢出警告
+    np.seterr(over='ignore')
+    check_chaos_trans()
 
 

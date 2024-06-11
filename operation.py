@@ -1,16 +1,6 @@
 from registry import operation_registry, transform_registry
 import utils
 
-
-def before_perform_operation():
-    def decorator(op_func):
-        def wrapper(*args, **kwargs):
-            print(f'performing {args[0].__class__.__name__} for {args[0].times} times')
-            return op_func(*args, **kwargs)
-        return wrapper
-    return decorator
-
-
 class BaseOperation:
     def __init__(self, times=1):
         self.times = times
@@ -24,7 +14,6 @@ class BaseOperation:
 
 @operation_registry.register('RowShuffle')
 class RowShuffleOperation(BaseOperation):
-    @before_perform_operation()
     def __call__(self, rgb, it: iter, reverse=False):
         for _ in range(self.times):
             for dim in (range(rgb.shape[2]) if not reverse else reversed(range(rgb.shape[2]))):
@@ -39,7 +28,6 @@ class RowShuffleOperation(BaseOperation):
 
 @operation_registry.register('ColumnShuffle')
 class ColumnShuffleOperation(BaseOperation):
-    @before_perform_operation()
     def __call__(self, rgb, it: iter, reverse=False):
         for _ in range(self.times):
             for dim in (range(rgb.shape[2]) if not reverse else reversed(range(rgb.shape[2]))):
@@ -54,7 +42,6 @@ class ColumnShuffleOperation(BaseOperation):
 
 @operation_registry.register('Diffusion')
 class DiffusionOperation(BaseOperation):
-    @before_perform_operation()
     def __call__(self, rgb, it: iter, reverse=False):
         shape = rgb.shape
         flt = rgb.flatten()
@@ -105,7 +92,6 @@ class DiscreteCosineTransformOperation(BaseOperation):
     def __init__(self, times=1):
         super().__init__(times)
 
-    @before_perform_operation()
     def __call__(self, rgb, it: iter, reverse=False):
         if not reverse:
             return transform_registry.build('DiscreteCosineTransform').forward(rgb)
@@ -121,7 +107,6 @@ class FourierTransformOperation(BaseOperation):
     def __init__(self, times=1):
         super().__init__(times)
 
-    @before_perform_operation()
     def __call__(self, rgb, it: iter, reverse=False):
         if not reverse:
             return transform_registry.build('FourierTransform').forward(rgb)
