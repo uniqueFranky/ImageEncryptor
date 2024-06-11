@@ -2,7 +2,7 @@ import numpy as np
 import random
 import chaos
 import utils
-from registry import encryptor_registry, chaos_operation_registry, chaos_mapping_registry
+from registry import encryptor_registry, chaos_operation_registry, chaos_mapping_registry, transform_registry
 import trans
 class BaseEncryptor:
     def __init__(self):
@@ -14,6 +14,13 @@ class BaseEncryptor:
     def decrypt(self, rgb):
         pass
 
+def before_perform_operation():
+    def decorator(op_func):
+        def wrapper(*args, **kwargs):
+            print(f'performing {args[0].__class__.__name__} for {args[0].times} times')
+            return op_func(*args, **kwargs)
+        return wrapper
+    return decorator
 
 @encryptor_registry.register('Arnold')
 class ArnoldTransform(BaseEncryptor):
@@ -189,6 +196,7 @@ class BaseChaosOperation:
 
 @chaos_operation_registry.register('RowShuffle')
 class RowShuffleOperation(BaseChaosOperation):
+    @before_perform_operation()
     def __call__(self, rgb, it: iter, reverse=False):
         for _ in range(self.times):
             for dim in (range(rgb.shape[2]) if not reverse else reversed(range(rgb.shape[2]))):
@@ -203,6 +211,7 @@ class RowShuffleOperation(BaseChaosOperation):
 
 @chaos_operation_registry.register('ColumnShuffle')
 class ColumnShuffleOperation(BaseChaosOperation):
+    @before_perform_operation()
     def __call__(self, rgb, it: iter, reverse=False):
         for _ in range(self.times):
             for dim in (range(rgb.shape[2]) if not reverse else reversed(range(rgb.shape[2]))):
@@ -217,6 +226,7 @@ class ColumnShuffleOperation(BaseChaosOperation):
 
 @chaos_operation_registry.register('Diffusion')
 class DiffusionOperation(BaseChaosOperation):
+    @before_perform_operation()
     def __call__(self, rgb, it: iter, reverse=False):
         shape = rgb.shape
         flt = rgb.flatten()
@@ -245,7 +255,7 @@ class CompositionalChaosOperation(BaseChaosOperation):
     def __init__(self, op_list, times=1):
         self.op_list = op_list
         self.times = times
-    
+
     def __call__(self, rgb, it: iter, reverse=False):
         for _ in range(self.times):
             if not reverse:
@@ -266,12 +276,14 @@ class CompositionalChaosOperation(BaseChaosOperation):
 class DiscreteCosineTransformOperation(BaseChaosOperation):
     def __init__(self, times=1):
         super().__init__(times)
-    
+
+    @before_perform_operation()
     def __call__(self, rgb, it: iter, reverse=False):
         if not reverse:
-            return trans.DiscreteCosineTransform.forward(rgb)
+            return transform_registry.build('DiscreteCosineTransform').forward(rgb)
         else:
-            return trans.DiscreteCosineTransform.backward(rgb)
+            return transform_registry.build('DiscreteCosineTransform').backward(rgb)
         
     def get_cost(self, rgb):
         return 0
+

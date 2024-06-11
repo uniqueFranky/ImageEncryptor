@@ -1,5 +1,7 @@
 import numpy as np
-
+import pywt
+import scipy
+from registry import transform_registry
 
 class BaseTransform:
 
@@ -11,9 +13,10 @@ class BaseTransform:
     def backward(rgb):
         pass
 
+
+@transform_registry.register('RawDiscreteCosineTransform')
 class DiscreteCosineTransform(BaseTransform):
-    @staticmethod
-    def dct_2d(block):
+    def dct_2d(self, block):
         N = block.shape[0]
         dct_matrix = np.zeros((N, N), dtype=float)
         for u in range(N):
@@ -33,8 +36,7 @@ class DiscreteCosineTransform(BaseTransform):
                 dct_matrix[u, v] = cu * cv * sum
         return dct_matrix
 
-    @staticmethod
-    def idct_2d(block):
+    def idct_2d(self, block):
         N = block.shape[0]
         idct_matrix = np.zeros((N, N), dtype=float)
         for x in range(N):
@@ -54,8 +56,7 @@ class DiscreteCosineTransform(BaseTransform):
                 idct_matrix[x, y] = sum
         return idct_matrix
 
-    @staticmethod
-    def block_transform(image, block_size, transform_func):
+    def block_transform(self, image, block_size, transform_func):
         h, w = image.shape
 
         # 计算需要的填充量
@@ -77,21 +78,63 @@ class DiscreteCosineTransform(BaseTransform):
         transformed_image = transformed_image[:h, :w]
         return transformed_image
 
-    @staticmethod
-    def forward(rgb):
+    def forward(self, rgb):
         transformed_rgb = np.copy(rgb).astype(np.float)
         for layer_id in range(rgb.shape[2]):
             layer = rgb[:, :, layer_id]
-            transformed_rgb[:, :, layer_id] = DiscreteCosineTransform.block_transform(layer, 8, DiscreteCosineTransform.dct_2d)
+            transformed_rgb[:, :, layer_id] = self.block_transform(layer, 8, DiscreteCosineTransform.dct_2d)
         return transformed_rgb
 
-    @staticmethod
-    def backward(rgb):
+    def backward(self, rgb):
         transformed_rgb = np.copy(rgb).astype(np.float)
         for layer_id in range(rgb.shape[2]):
             layer = rgb[:, :, layer_id]
-            transformed_rgb[:, :, layer_id] = DiscreteCosineTransform.block_transform(layer, 8, DiscreteCosineTransform.idct_2d)
+            transformed_rgb[:, :, layer_id] = self.block_transform(layer, 8, DiscreteCosineTransform.idct_2d)
         return transformed_rgb
         
 
+@transform_registry.register('DiscreteCosineTransform')
+class ScipyDiscreteCosineTransform(BaseTransform):
+    def dct_2d(self, image):
+        return scipy.fftpack.dct(scipy.fftpack.dct(image.T, norm='ortho').T, norm='ortho')
+
+    def idct_2d(self, dct_image):
+        return scipy.fftpack.idct(scipy.fftpack.idct(dct_image.T, norm='ortho').T, norm='ortho')
+
+    def forward(self, rgb):
+        transformed_rgb = np.zeros_like(rgb, dtype=float)
+        for layer_id in range(rgb.shape[2]):
+            layer = rgb[:, :, layer_id]
+            transformed_rgb[:, :, layer_id] = self.dct_2d(layer)
+        return transformed_rgb
+
+    def backward(self, transformed_rgb):
+        reconstructed_rgb = np.zeros_like(transformed_rgb, dtype=float)
+        for layer_id in range(transformed_rgb.shape[2]):
+            layer = transformed_rgb[:, :, layer_id]
+            reconstructed_rgb[:, :, layer_id] = self.idct_2d(layer)
+        return reconstructed_rgb
+
+
+@transform_registry.register('FourierTransform')
+class FourierTransform(BaseTransform):
+    def fft_2d(self, image):
+        return np.fft.fft2(image)
+
+    def ifft_2d(self, freq_domain_image):
+        return np.fft.ifft2(freq_domain_image)
+
+    def forward(self, rgb):
+        transformed_rgb = np.zeros_like(rgb, dtype=complex)
+        for layer_id in range(rgb.shape[2]):
+            layer = rgb[:, :, layer_id]
+            transformed_rgb[:, :, layer_id] = self.fft_2d(layer)
+        return transformed_rgb
+
+    def backward(self, transformed_rgb):
+        reconstructed_rgb = np.zeros_like(transformed_rgb, dtype=float)
+        for layer_id in range(transformed_rgb.shape[2]):
+            layer = transformed_rgb[:, :, layer_id]
+            reconstructed_rgb[:, :, layer_id] = np.abs(self.ifft_2d(layer))
+        return reconstructed_rgb
 
