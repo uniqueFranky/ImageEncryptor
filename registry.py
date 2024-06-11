@@ -24,4 +24,5 @@ operation_registry = Registry()
 chaos_mapping_registry = Registry()
 transform_registry = Registry()
 sequence_registry = Registry()
+attacker_registry = Registry()
 
