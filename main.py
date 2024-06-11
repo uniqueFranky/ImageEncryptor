@@ -1,6 +1,7 @@
 import utils
 from registry import encryptor_registry, chaos_operation_registry, chaos_mapping_registry
-
+import trans
+import numpy as np
 
 def check_arnold():
     path='img/Lenna.jpg'
@@ -50,5 +51,21 @@ def check_classic_chaos():
     utils.show_rgb(re)
 
 
+def check_trans():
+    path='img/Lenna.jpg'
+
+    rgb = utils.read_rgb(path)
+    en = encryptor_registry.build('DiscreteCosineTransformChaos', row_shuffle_times=10, column_shuffle_times=10, compositional_times=10, tent_initial=0.8)
+
+    cipher = en.encrypt(rgb)
+    utils.show_rgb(cipher)
+
+    re = en.decrypt(cipher)
+    utils.show_rgb(re)
+    
+
 if __name__ == '__main__':
-    check_classic_chaos()
+    check_trans()
+
+
+

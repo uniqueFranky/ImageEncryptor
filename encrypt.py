@@ -3,7 +3,7 @@ import random
 import chaos
 import utils
 from registry import encryptor_registry, chaos_operation_registry, chaos_mapping_registry
-
+import trans
 class BaseEncryptor:
     def __init__(self):
         pass
@@ -152,8 +152,29 @@ class ClassicChaosTransform(BaseChaosTransform):
         tent = chaos_mapping_registry.build('Tent', p=tent_p)
         self.add_chaos_map(tent, initial=tent_initial)
 
-        
+@encryptor_registry.register('DiscreteCosineTransformChaos')
+class DiscreteCosineTransformChaos(BaseChaosTransform):
+    def __init__(self, column_shuffle_times=3, row_shuffle_times=3, compositional_times=3, 
+                 arnold_a=1, arnold_b=1, arnold_initial=[1.2, 2.5],
+                 tent_p=0.5, tent_initial=0.5):
+        super().__init__()
 
+        # init DCT operation
+        dct = chaos_operation_registry.build('DiscreteCosineTransform', times=1)
+        self.add_operation(dct)
+
+        # init chaos operations
+        column_shuffle = chaos_operation_registry.build('ColumnShuffle', times=column_shuffle_times)
+        row_shuffle = chaos_operation_registry.build('RowShuffle', times=row_shuffle_times)
+        compositional = chaos_operation_registry.build('Compositional', [column_shuffle, row_shuffle], times=compositional_times)
+        self.add_operation(compositional)
+
+        # init chaos mappings
+        arnold = chaos_mapping_registry.build('Arnold', a=arnold_a, b=arnold_b)
+        self.add_chaos_map(arnold, initial=arnold_initial)
+
+        tent = chaos_mapping_registry.build('Tent', p=tent_p)
+        self.add_chaos_map(tent, initial=tent_initial)
 
 class BaseChaosOperation:
     def __init__(self, times=1):
@@ -241,3 +262,16 @@ class CompositionalChaosOperation(BaseChaosOperation):
             cnt += op.get_cost(rgb)
         return cnt * self.times
 
+@chaos_operation_registry.register('DiscreteCosineTransform')
+class DiscreteCosineTransformOperation(BaseChaosOperation):
+    def __init__(self, times=1):
+        super().__init__(times)
+    
+    def __call__(self, rgb, it: iter, reverse=False):
+        if not reverse:
+            return trans.DiscreteCosineTransform.forward(rgb)
+        else:
+            return trans.DiscreteCosineTransform.backward(rgb)
+        
+    def get_cost(self, rgb):
+        return 0
