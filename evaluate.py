@@ -18,6 +18,7 @@ class BaseMetric:
         pass
 
 
+# 均方误差
 @metric_registry.register('MSE')
 class MeanSquaredErrorMetric(BaseMetric):
     def __call__(self, rgb1, rgb2):
@@ -26,6 +27,7 @@ class MeanSquaredErrorMetric(BaseMetric):
         return np.mean((rgb1 - rgb2) ** 2)
     
 
+# 峰值信噪比
 @metric_registry.register('PSNR')
 class PeakSignal2NoiseRatioMetric(BaseMetric):
     def __call__(self, rgb1, rgb2):
@@ -37,6 +39,7 @@ class PeakSignal2NoiseRatioMetric(BaseMetric):
         return psnr
 
 
+# 结构相似性指数
 @metric_registry.register('SSIM')
 class StructuralSimilarityIndexMetric(BaseMetric):
     def __call__(self, rgb1, rgb2):
@@ -46,3 +49,5 @@ class StructuralSimilarityIndexMetric(BaseMetric):
         rgb2 = np.clip(rgb2, 0, 255).astype(np.uint8)
         ssim_value = ssim(rgb1, rgb2, channel_axis=2)
         return ssim_value
+
+

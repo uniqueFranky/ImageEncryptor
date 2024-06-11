@@ -3,17 +3,18 @@ import pywt
 import scipy
 from registry import transform_registry
 
+
+# 图像变换基类
 class BaseTransform:
-
-    @staticmethod
-    def forward(rgb):
+    def forward(sekf, rgb):
         pass
 
-    @staticmethod
-    def backward(rgb):
+    def backward(self, rgb):
         pass
 
 
+# 自己实现的离散余弦变换
+# 由于效率不如直接调库，所以该类暂时没有使用
 @transform_registry.register('RawDiscreteCosineTransform')
 class DiscreteCosineTransform(BaseTransform):
     def dct_2d(self, block):
@@ -93,6 +94,7 @@ class DiscreteCosineTransform(BaseTransform):
         return transformed_rgb
         
 
+# 离散余弦变换
 @transform_registry.register('DiscreteCosineTransform')
 class ScipyDiscreteCosineTransform(BaseTransform):
     def dct_2d(self, image):
@@ -101,14 +103,14 @@ class ScipyDiscreteCosineTransform(BaseTransform):
     def idct_2d(self, dct_image):
         return scipy.fftpack.idct(scipy.fftpack.idct(dct_image.T, norm='ortho').T, norm='ortho')
 
-    def forward(self, rgb):
+    def forward(self, rgb):  # 对RGB三个通道分别进行离散余弦变换，返回的是浮点值
         transformed_rgb = np.zeros_like(rgb, dtype=float)
         for layer_id in range(rgb.shape[2]):
             layer = rgb[:, :, layer_id]
             transformed_rgb[:, :, layer_id] = self.dct_2d(layer)
         return transformed_rgb
 
-    def backward(self, transformed_rgb):
+    def backward(self, transformed_rgb):  # 逆离散余弦变换
         reconstructed_rgb = np.zeros_like(transformed_rgb, dtype=float)
         for layer_id in range(transformed_rgb.shape[2]):
             layer = transformed_rgb[:, :, layer_id]
@@ -116,6 +118,7 @@ class ScipyDiscreteCosineTransform(BaseTransform):
         return reconstructed_rgb
 
 
+# 傅立叶变换
 @transform_registry.register('FourierTransform')
 class FourierTransform(BaseTransform):
     def fft_2d(self, image):
@@ -124,14 +127,14 @@ class FourierTransform(BaseTransform):
     def ifft_2d(self, freq_domain_image):
         return np.fft.ifft2(freq_domain_image)
 
-    def forward(self, rgb):
+    def forward(self, rgb):  # 对RGB三个通道分别进行傅立叶变换，返回的是复数值
         transformed_rgb = np.zeros_like(rgb, dtype=complex)
         for layer_id in range(rgb.shape[2]):
             layer = rgb[:, :, layer_id]
             transformed_rgb[:, :, layer_id] = self.fft_2d(layer)
         return transformed_rgb
 
-    def backward(self, transformed_rgb):
+    def backward(self, transformed_rgb):  # 逆傅立叶变换
         reconstructed_rgb = np.zeros_like(transformed_rgb, dtype=float)
         for layer_id in range(transformed_rgb.shape[2]):
             layer = transformed_rgb[:, :, layer_id]
