@@ -1,71 +1,66 @@
 import utils
-from registry import encryptor_registry, chaos_operation_registry, chaos_mapping_registry
-import trans
+from registry import encryptor_registry, operation_registry, chaos_mapping_registry, transform_registry
+import trans, encrypt, operation
 import numpy as np
 
-def check_arnold():
-    path='img/Lenna.jpg'
-
+def check_random():
+    path = './img/Lenna.jpg'
     rgb = utils.read_rgb(path)
-    arnold = encryptor_registry.build('Arnold', shuffle_times=5, a=3, b=2)
 
-    cipher = arnold.encrypt(rgb)
+    en = encryptor_registry.build('ClassicRandom', 2024)
+    cipher = en.encrypt(rgb)
     utils.show_rgb(cipher)
-
-    re = arnold.decrypt(cipher)
+    re = en.decrypt(cipher)
     utils.show_rgb(re)
-
 
 def check_chaos():
-    en = encryptor_registry.build('BaseChaos')
-    en.add_chaos_map(chaos_mapping_registry.build('Arnold'), initial=[1.2, 2.5])
-    en.add_chaos_map(chaos_mapping_registry.build('Tent'), initial=0.5)
-    comp = chaos_operation_registry.build('Compositional', 
-                                            [
-                                                chaos_operation_registry.build('RowShuffle', times=5),
-                                                chaos_operation_registry.build('ColumnShuffle', times=3),
-                                                chaos_operation_registry.build('Diffusion', times=3)
-                                            ], 
-                                            times=1)
-    en.add_operation(comp)
-    path='img/Lenna.jpg'
-
+    path = './img/Lenna.jpg'
     rgb = utils.read_rgb(path)
+
+    en = encryptor_registry.build('ClassicChaos')
     cipher = en.encrypt(rgb)
     utils.show_rgb(cipher)
-
     re = en.decrypt(cipher)
     utils.show_rgb(re)
 
-
-def check_classic_chaos():
-    en = encryptor_registry.build('ClassicChaos', row_shuffle_times=0, tent_initial=0.8)
-
-    path='img/Lenna.jpg'
-
+def check_chaos_trans():
+    path = './img/Lenna.jpg'
     rgb = utils.read_rgb(path)
-    cipher = en.encrypt(rgb)
-    utils.show_rgb(cipher)
 
-    re = en.decrypt(cipher)
-    utils.show_rgb(re)
-
-
-def check_trans():
-    path='img/Lenna.jpg'
-
-    rgb = utils.read_rgb(path)
-    en = encryptor_registry.build('DiscreteCosineTransformChaos', row_shuffle_times=10, column_shuffle_times=10, compositional_times=10, tent_initial=0.8)
+    en = encryptor_registry.build('DiscreteCosineChaos')
 
     cipher = en.encrypt(rgb)
     utils.show_rgb(cipher)
-
     re = en.decrypt(cipher)
     utils.show_rgb(re)
-    
+
+def check_random_trans():
+    path = './img/Lenna.jpg'
+    rgb = utils.read_rgb(path)
+
+    en = encryptor_registry.build('BaseRandom', 2024)
+    en.add_operation(operation_registry.build('FourierTransform'))
+    en.add_operation(operation_registry.build('ColumnShuffle', times=3))
+    en.add_operation(operation_registry.build('RowShuffle', times=3))
+
+    cipher = en.encrypt(rgb)
+    utils.show_rgb(cipher)
+    re = en.decrypt(cipher)
+    utils.show_rgb(re)
+
+def check_cos():
+    path = './img/Lenna.jpg'
+    rgb = utils.read_rgb(path)
+
+    t = transform_registry.build('DiscreteCosineTransform')
+    cipher = t.forward(rgb)
+    utils.show_rgb(cipher)
+
+    re = t.backward(cipher)
+    utils.show_rgb(re)
 
 if __name__ == '__main__':
-    check_trans()
-
+    check_random_trans()
+    # check_chaos_trans()
 
 

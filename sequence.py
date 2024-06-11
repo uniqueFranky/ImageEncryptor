@@ -1,7 +1,8 @@
 import math
 import numpy as np
 import utils
-from registry import chaos_mapping_registry
+import random
+from registry import chaos_mapping_registry, sequence_registry
 
 class BaseChaosMapping:
     def __call__(self, x):
@@ -53,7 +54,21 @@ class ArnoldMapping(BaseChaosMapping):
     def __len__(self):
         return 2
 
-class ChaosSystem:
+class BaseSequenceSystem:
+    def get_sequence(self, length=100):
+        pass
+
+    def reset(self):
+        pass
+
+    def __next__(self):
+        pass
+
+    def get_reverse_iterator(self, length):
+        pass
+
+@sequence_registry.register('Chaos')
+class ChaosSystem(BaseSequenceSystem):
     def __init__(self):
         self.map_list = []
         self.inital_value = []
@@ -66,12 +81,13 @@ class ChaosSystem:
         self.inital_value.append(inital)
         self.current_status.append(inital)
     
-    '''
-    从initial_value开始，计算混沌序列，共生成length个
-    返回的结果为[length, num_map]，每个map都会生成一个timestep中的一个元素
-    不影响current_status
-    '''
-    def get_chaos_sequence(self, length=100):
+
+    def get_sequence(self, length=100):
+        '''
+        从initial_value开始，计算混沌序列，共生成length个
+        返回的结果为[length, num_map]，每个map都会生成一个timestep中的一个元素
+        不影响current_status
+        '''
         result = []
         chaos = self.inital_value[:]
         for _ in range(length):
@@ -80,24 +96,47 @@ class ChaosSystem:
             result.append(utils.extract_element(chaos))
         return result
 
-    '''
-    以current_status为当前状态，生成下一个混沌值，并更新状态
-    '''
+
     def __next__(self):
+        '''
+        以current_status为当前状态，生成下一个混沌值，并更新状态
+        '''
         for (i, map) in enumerate(self.map_list):
             self.current_status[i] = map(self.current_status[i])
         return utils.extract_element(self.current_status)
     
-    def get_next_chaos(self):
+    def get_next(self):
         return next(self)
     
     def reset(self):
         self.current_status = self.inital_value[:]
 
     def get_reverse_iterator(self, length):
-        seq = reversed(self.get_chaos_sequence(length))
+        self.reset()
+        seq = reversed(self.get_sequence(length))
         return iter(seq)
         
 
-        
+@sequence_registry.register('Random')
+class RandomSystem(BaseSequenceSystem):
+    def __init__(self, seed):
+        self.seed = seed
+
+    def get_sequence(self, length=100):
+        result = []
+        rd = []
+        for _ in range(length):
+            result.append(random.randint(0, 2**15))
+        return result
+    
+    def reset(self):
+        random.seed(self.seed)
+
+    def get_reverse_iterator(self, length):
+        self.reset()
+        seq = reversed(self.get_sequence(length))
+        return iter(seq)
+    
+    def __next__(self):
+        return random.randint(0, 2**15)
         

@@ -20,7 +20,8 @@ class Registry:
     
 
 encryptor_registry = Registry()
-chaos_operation_registry = Registry()
+operation_registry = Registry()
 chaos_mapping_registry = Registry()
 transform_registry = Registry()
+sequence_registry = Registry()
 

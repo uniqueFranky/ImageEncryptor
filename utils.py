@@ -24,8 +24,11 @@ def extract_element(chaos):
 
 def discrete(timestep):
     sum = 0
-    for v in timestep:
-        sum += 256 * v
+    if isinstance(timestep, list) or isinstance(timestep, np.ndarray):
+        for v in timestep:
+            sum += 256 * v
+    else:
+        sum = timestep
     return math.floor(256 * sum) % 256
 
 def rgb_to_yuv(image_rgb):
