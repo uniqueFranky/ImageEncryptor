@@ -13,6 +13,7 @@ def check_random():
     cipher = attacker_registry.build('RowErase', times=10)(cipher)
     cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
     cipher = attacker_registry.build('PointReplace', times=10)(cipher)
+    cipher = attacker_registry.build('BlockSwap', times=10, block_size=8)(cipher)
 
     utils.show_rgb(cipher)
     re = en.decrypt(cipher)
@@ -28,11 +29,11 @@ def check_chaos():
     cipher = attacker_registry.build('RowErase', times=10)(cipher)
     cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
     cipher = attacker_registry.build('PointReplace', times=10)(cipher)
+    cipher = attacker_registry.build('BlockSwap', times=10, block_size=8)(cipher)
 
     utils.show_rgb(cipher)
     re = en.decrypt(cipher)
     utils.show_rgb(re)
-    utils.show_rgb(rgb)
 
     mc = metric_registry.build('MSE')
     print(f'Attack Loss: {mc(rgb, re)}')
@@ -48,6 +49,7 @@ def check_chaos_trans():
     cipher = attacker_registry.build('RowErase', times=10)(cipher)
     cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
     cipher = attacker_registry.build('PointReplace', times=10)(cipher)
+    cipher = attacker_registry.build('BlockSwap', times=10, block_size=8)(cipher)
 
     utils.show_rgb(cipher)
     re = en.decrypt(cipher)
@@ -76,6 +78,7 @@ def check_random_trans():
     cipher = attacker_registry.build('RowErase', times=10)(cipher)
     cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
     cipher = attacker_registry.build('PointReplace', times=10)(cipher)
+    cipher = attacker_registry.build('BlockSwap', times=10, block_size=50)(cipher)
 
     utils.show_rgb(cipher)
     re = en.decrypt(cipher)
@@ -92,6 +95,7 @@ def check_cos():
     cipher = attacker_registry.build('RowErase', times=10)(cipher)
     cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
     cipher = attacker_registry.build('PointReplace', times=10)(cipher)
+    cipher = attacker_registry.build('BlockSwap', times=10, block_size=8)(cipher)
 
     utils.show_rgb(cipher)
 
@@ -101,6 +105,6 @@ def check_cos():
 if __name__ == '__main__':
     # 设置忽略溢出警告
     np.seterr(over='ignore')
-    check_chaos_trans()
+    check_random_trans()
 
 
