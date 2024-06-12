@@ -2,7 +2,7 @@ import numpy as np
 import random
 import sequence
 import utils
-from registry import encryptor_registry, operation_registry, chaos_mapping_registry, transform_registry, sequence_registry
+from registry import encryptor_registry, operation_registry, chaos_mapping_registry, sequence_registry
 import trans
 import operation
 import evaluate

@@ -1,21 +1,31 @@
 import numpy as np
 import pywt
 import scipy
-from registry import transform_registry
+import operation
+from registry import operation_registry
 
 
 # 图像变换基类
-class BaseTransform:
-    def forward(sekf, rgb):
+class BaseTransform(operation.BaseOperation):
+    def forward(self, rgb):
         pass
 
     def backward(self, rgb):
         pass
 
+    def __call__(self, rgb, it: iter, reverse=False):
+        if not reverse:
+            return self.forward(rgb)
+        else:
+            return self.backward(rgb)
+        
+    def get_cost(self, rgb):
+        return 0
+
 
 # 自己实现的离散余弦变换
 # 由于效率不如直接调库，所以该类暂时没有使用
-@transform_registry.register('RawDiscreteCosineTransform')
+@operation_registry.register('RawDiscreteCosineTransform')
 class DiscreteCosineTransform(BaseTransform):
     def dct_2d(self, block):
         N = block.shape[0]
@@ -95,7 +105,7 @@ class DiscreteCosineTransform(BaseTransform):
         
 
 # 离散余弦变换
-@transform_registry.register('DiscreteCosineTransform')
+@operation_registry.register('DiscreteCosineTransform')
 class ScipyDiscreteCosineTransform(BaseTransform):
     def dct_2d(self, image):
         return scipy.fftpack.dct(scipy.fftpack.dct(image.T, norm='ortho').T, norm='ortho')
@@ -119,7 +129,7 @@ class ScipyDiscreteCosineTransform(BaseTransform):
 
 
 # 傅立叶变换
-@transform_registry.register('FourierTransform')
+@operation_registry.register('FourierTransform')
 class FourierTransform(BaseTransform):
     def fft_2d(self, image):
         return np.fft.fft2(image)

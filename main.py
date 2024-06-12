@@ -1,5 +1,5 @@
 import utils
-from registry import encryptor_registry, operation_registry, chaos_mapping_registry, transform_registry, attacker_registry, metric_registry
+from registry import encryptor_registry, operation_registry, chaos_mapping_registry, attacker_registry, metric_registry
 import trans, encrypt, operation, attack, evaluate
 import numpy as np
 
@@ -26,10 +26,10 @@ def check_chaos():
     en = encryptor_registry.build('ClassicChaos')
     cipher = en.encrypt(rgb)
 
-    cipher = attacker_registry.build('RowErase', times=10)(cipher)
-    cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
-    cipher = attacker_registry.build('PointReplace', times=10)(cipher)
-    cipher = attacker_registry.build('BlockSwap', times=10, block_size=8)(cipher)
+    # cipher = attacker_registry.build('RowErase', times=10)(cipher)
+    # cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
+    # cipher = attacker_registry.build('PointReplace', times=10)(cipher)
+    # cipher = attacker_registry.build('BlockSwap', times=10, block_size=8)(cipher)
 
     utils.show_rgb(cipher)
     re = en.decrypt(cipher)
@@ -46,10 +46,10 @@ def check_chaos_trans():
 
     cipher = en.encrypt(rgb)
 
-    cipher = attacker_registry.build('RowErase', times=10)(cipher)
-    cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
-    cipher = attacker_registry.build('PointReplace', times=10)(cipher)
-    cipher = attacker_registry.build('BlockSwap', times=10, block_size=8)(cipher)
+    # cipher = attacker_registry.build('RowErase', times=10)(cipher)
+    # cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
+    # cipher = attacker_registry.build('PointReplace', times=10)(cipher)
+    # cipher = attacker_registry.build('BlockSwap', times=10, block_size=8)(cipher)
 
     utils.show_rgb(cipher)
     re = en.decrypt(cipher)
@@ -75,10 +75,10 @@ def check_random_trans():
 
     cipher = en.encrypt(rgb)
 
-    cipher = attacker_registry.build('RowErase', times=10)(cipher)
-    cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
-    cipher = attacker_registry.build('PointReplace', times=10)(cipher)
-    cipher = attacker_registry.build('BlockSwap', times=10, block_size=50)(cipher)
+    # cipher = attacker_registry.build('RowErase', times=10)(cipher)
+    # cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
+    # cipher = attacker_registry.build('PointReplace', times=10)(cipher)
+    # cipher = attacker_registry.build('BlockSwap', times=10, block_size=50)(cipher)
 
     utils.show_rgb(cipher)
     re = en.decrypt(cipher)
@@ -105,6 +105,6 @@ def check_cos():
 if __name__ == '__main__':
     # 设置忽略溢出警告
     np.seterr(over='ignore')
-    check_random_trans()
+    check_chaos_trans()
 
 

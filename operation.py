@@ -1,4 +1,4 @@
-from registry import operation_registry, transform_registry
+from registry import operation_registry
 import utils
 
 class BaseOperation:  # 对图像（原始域或变换域）作加密操作的基类
@@ -91,32 +91,3 @@ class CompositionalChaosOperation(BaseOperation):  # 组合的加密操作，可
         for op in self.op_list:
             cnt += op.get_cost(rgb)
         return cnt * self.times
-
-@operation_registry.register('DiscreteCosineTransform')
-class DiscreteCosineTransformOperation(BaseOperation):  # 对图像进行离散余弦变换
-    def __init__(self, times=1):
-        super().__init__(times)
-
-    def __call__(self, rgb, it: iter, reverse=False):
-        if not reverse:  # 正向离散余弦变换
-            return transform_registry.build('DiscreteCosineTransform').forward(rgb)
-        else:  # 逆向离散余弦变换
-            return transform_registry.build('DiscreteCosineTransform').backward(rgb)
-        
-    def get_cost(self, rgb):  # 离散余弦变换不需要从序列发生器获取数值
-        return 0
-
-
-@operation_registry.register('FourierTransform')
-class FourierTransformOperation(BaseOperation):  # 对图像进行傅立叶变换
-    def __init__(self, times=1):
-        super().__init__(times)
-
-    def __call__(self, rgb, it: iter, reverse=False):
-        if not reverse:
-            return transform_registry.build('FourierTransform').forward(rgb)
-        else:
-            return transform_registry.build('FourierTransform').backward(rgb)
-        
-    def get_cost(self, rgb):  # 傅立叶变换也不需要从序列发生器获取数值
-        return 0
