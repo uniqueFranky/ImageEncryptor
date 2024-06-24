@@ -3,69 +3,76 @@ from registry import encryptor_registry, operation_registry, chaos_mapping_regis
 import trans, encrypt, operation, attack, evaluate
 import numpy as np
 
-def check_random():
-    path = './img/Lenna.jpg'
+def check_random(path='./img/Lenna.jpg', do_attack=True):
     rgb = utils.read_rgb(path)
 
     en = encryptor_registry.build('ClassicRandom', 2024)
     cipher = en.encrypt(rgb)
 
-    cipher = attacker_registry.build('RowErase', times=10)(cipher)
-    cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
-    cipher = attacker_registry.build('PointReplace', times=10)(cipher)
-    cipher = attacker_registry.build('BlockSwap', times=10, block_size=8)(cipher)
+    if do_attack:
+        cipher = attacker_registry.build('RowErase', times=10)(cipher)
+        cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
+        cipher = attacker_registry.build('PointReplace', times=10)(cipher)
+        cipher = attacker_registry.build('BlockSwap', times=10, block_size=8)(cipher)
 
     utils.show_rgb(cipher)
     re = en.decrypt(cipher)
     utils.show_rgb(re)
 
-def check_chaos():
-    path = './img/Lenna.jpg'
+def check_chaos(path='./img/Lenna.jpg', do_attack=True):
     rgb = utils.read_rgb(path)
 
     en = encryptor_registry.build('ClassicChaos')
     cipher = en.encrypt(rgb)
 
-    # cipher = attacker_registry.build('RowErase', times=10)(cipher)
-    # cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
-    # cipher = attacker_registry.build('PointReplace', times=10)(cipher)
-    # cipher = attacker_registry.build('BlockSwap', times=10, block_size=8)(cipher)
+    if do_attack:
+        cipher = attacker_registry.build('RowErase', times=10)(cipher)
+        cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
+        cipher = attacker_registry.build('PointReplace', times=10)(cipher)
+        cipher = attacker_registry.build('BlockSwap', times=10, block_size=8)(cipher)
 
     utils.show_rgb(cipher)
     re = en.decrypt(cipher)
     utils.show_rgb(re)
 
     mc = metric_registry.build('MSE')
-    print(f'Attack Loss: {mc(rgb, re)}')
+    print(f'MSE: {mc(rgb, re)}')
 
-def check_chaos_trans():
-    path = './img/Lenna.jpg'
+    mc = metric_registry.build('PSNR')
+    print(f'PSNR: {mc(rgb, re)}')
+
+    mc = metric_registry.build('SSIM')
+    print(f'SSIM: {mc(rgb, re)}')
+
+def check_chaos_trans(path='./img/Lenna.jpg', do_attack=True):
     rgb = utils.read_rgb(path)
 
     en = encryptor_registry.build('DiscreteCosineChaos')
 
     cipher = en.encrypt(rgb)
 
-    # cipher = attacker_registry.build('RowErase', times=10)(cipher)
-    # cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
-    # cipher = attacker_registry.build('PointReplace', times=10)(cipher)
-    # cipher = attacker_registry.build('BlockSwap', times=10, block_size=8)(cipher)
+    if do_attack:
+        cipher = attacker_registry.build('RowErase', times=10)(cipher)
+        cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
+        cipher = attacker_registry.build('PointReplace', times=10)(cipher)
+        cipher = attacker_registry.build('BlockSwap', times=10, block_size=8)(cipher)
 
     utils.show_rgb(cipher)
     re = en.decrypt(cipher)
     utils.show_rgb(re)
 
-    mc = metric_registry.build('SSIM')
-    print(f'Attack Similarity: {mc(rgb, re)}')
+
 
     mc = metric_registry.build('MSE')
-    print(f'Attack MSE: {mc(rgb, re)}')
+    print(f'MSE: {mc(rgb, re)}')
 
     mc = metric_registry.build('PSNR')
-    print(f'Attack PSNR: {mc(rgb, re)}')
+    print(f'PSNR: {mc(rgb, re)}')
 
-def check_random_trans():
-    path = './img/Lenna.jpg'
+    mc = metric_registry.build('SSIM')
+    print(f'SSIM: {mc(rgb, re)}')
+
+def check_random_trans(path='./img/Lenna.jpg', do_attack=True):
     rgb = utils.read_rgb(path)
 
     en = encryptor_registry.build('BaseRandom', 2024)
@@ -75,36 +82,65 @@ def check_random_trans():
 
     cipher = en.encrypt(rgb)
 
-    # cipher = attacker_registry.build('RowErase', times=10)(cipher)
-    # cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
-    # cipher = attacker_registry.build('PointReplace', times=10)(cipher)
-    # cipher = attacker_registry.build('BlockSwap', times=10, block_size=50)(cipher)
+    if do_attack:
+        cipher = attacker_registry.build('RowErase', times=10)(cipher)
+        cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
+        cipher = attacker_registry.build('PointReplace', times=10)(cipher)
+        cipher = attacker_registry.build('BlockSwap', times=10, block_size=8)(cipher)
 
     utils.show_rgb(cipher)
     re = en.decrypt(cipher)
     utils.show_rgb(re)
 
+    mc = metric_registry.build('MSE')
+    print(f'MSE: {mc(rgb, re)}')
 
-def check_cos():
-    path = './img/Lenna.jpg'
+    mc = metric_registry.build('PSNR')
+    print(f'PSNR: {mc(rgb, re)}')
+
+    mc = metric_registry.build('SSIM')
+    print(f'SSIM: {mc(rgb, re)}')
+
+def check_arnold(path='./img/Lenna.jpg', do_attack=True):
     rgb = utils.read_rgb(path)
 
-    t = transform_registry.build('DiscreteCosineTransform')
-    cipher = t.forward(rgb)
+    en = encryptor_registry.build('Arnold')
+    cipher = en.encrypt(rgb)
 
-    cipher = attacker_registry.build('RowErase', times=10)(cipher)
-    cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
-    cipher = attacker_registry.build('PointReplace', times=10)(cipher)
-    cipher = attacker_registry.build('BlockSwap', times=10, block_size=8)(cipher)
+    if do_attack:
+        cipher = attacker_registry.build('RowErase', times=10)(cipher)
+        cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
+        cipher = attacker_registry.build('PointReplace', times=10)(cipher)
+        cipher = attacker_registry.build('BlockSwap', times=10, block_size=8)(cipher)
 
     utils.show_rgb(cipher)
-
-    re = t.backward(cipher)
+    re = en.decrypt(cipher)
     utils.show_rgb(re)
+
+    mc = metric_registry.build('MSE')
+    print(f'MSE: {mc(rgb, re)}')
+
+    mc = metric_registry.build('PSNR')
+    print(f'PSNR: {mc(rgb, re)}')
+
+    mc = metric_registry.build('SSIM')
+    print(f'SSIM: {mc(rgb, re)}')
+
 
 if __name__ == '__main__':
     # 设置忽略溢出警告
     np.seterr(over='ignore')
-    check_chaos_trans()
+
+    # 报告中的“4.3.1	基于混沌系统的加密”
+    # check_chaos(do_attack=True)
+
+    # 报告中的“4.3.2	基于离散余弦变换的加密”
+    # check_chaos_trans(do_attack=True)
+
+    # 报告中的“4.3.3	基于随机系统的傅立叶变换加密”
+    check_random_trans(path='./img/avatar.jpg', do_attack=True)
+
+    # 报告中的“4.3.4	猫脸变换加密”
+    # check_arnold(do_attack=False)
 
 
