@@ -4,33 +4,46 @@ import trans, encrypt, operation, attack, evaluate
 import numpy as np
 
 def check_random(path='./img/Lenna.jpg', do_attack=True):
+    # 读入图片
     rgb = utils.read_rgb(path)
 
+    # 创建加密器
     en = encryptor_registry.build('ClassicRandom', 2024)
+
+    # 加密
     cipher = en.encrypt(rgb)
 
+    # 攻击
     if do_attack:
         cipher = attacker_registry.build('RowErase', times=10)(cipher)
         cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
         cipher = attacker_registry.build('PointReplace', times=10)(cipher)
         cipher = attacker_registry.build('BlockSwap', times=10, block_size=8)(cipher)
 
+    # 显示图片
     utils.show_rgb(cipher)
     re = en.decrypt(cipher)
     utils.show_rgb(re)
 
+
 def check_chaos(path='./img/Lenna.jpg', do_attack=True):
+    # 读入图片
     rgb = utils.read_rgb(path)
 
+    # 创建加密器
     en = encryptor_registry.build('ClassicChaos')
+    
+    # 加密
     cipher = en.encrypt(rgb)
 
+    # 攻击
     if do_attack:
         cipher = attacker_registry.build('RowErase', times=10)(cipher)
         cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
         cipher = attacker_registry.build('PointReplace', times=10)(cipher)
         cipher = attacker_registry.build('BlockSwap', times=10, block_size=8)(cipher)
 
+    # 显示图片
     utils.show_rgb(cipher)
     re = en.decrypt(cipher)
     utils.show_rgb(re)
@@ -44,24 +57,28 @@ def check_chaos(path='./img/Lenna.jpg', do_attack=True):
     mc = metric_registry.build('SSIM')
     print(f'SSIM: {mc(rgb, re)}')
 
+
 def check_chaos_trans(path='./img/Lenna.jpg', do_attack=True):
+    # 读入图片
     rgb = utils.read_rgb(path)
 
+    # 创建加密器
     en = encryptor_registry.build('DiscreteCosineChaos')
 
+    # 加密
     cipher = en.encrypt(rgb)
 
+    # 攻击
     if do_attack:
         cipher = attacker_registry.build('RowErase', times=10)(cipher)
         cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
         cipher = attacker_registry.build('PointReplace', times=10)(cipher)
         cipher = attacker_registry.build('BlockSwap', times=10, block_size=8)(cipher)
 
+    # 显示图片
     utils.show_rgb(cipher)
     re = en.decrypt(cipher)
     utils.show_rgb(re)
-
-
 
     mc = metric_registry.build('MSE')
     print(f'MSE: {mc(rgb, re)}')
@@ -73,21 +90,27 @@ def check_chaos_trans(path='./img/Lenna.jpg', do_attack=True):
     print(f'SSIM: {mc(rgb, re)}')
 
 def check_random_trans(path='./img/Lenna.jpg', do_attack=True):
+    # 读入图片
     rgb = utils.read_rgb(path)
 
+    # 创建随机系统
     en = encryptor_registry.build('BaseRandom', 2024)
+    # 添加加密操作
     en.add_operation(operation_registry.build('FourierTransform'))
     en.add_operation(operation_registry.build('ColumnShuffle', times=3))
     en.add_operation(operation_registry.build('RowShuffle', times=3))
 
+    # 加密
     cipher = en.encrypt(rgb)
 
+    # 攻击
     if do_attack:
         cipher = attacker_registry.build('RowErase', times=10)(cipher)
         cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
         cipher = attacker_registry.build('PointReplace', times=10)(cipher)
         cipher = attacker_registry.build('BlockSwap', times=10, block_size=8)(cipher)
 
+    # 显示图片
     utils.show_rgb(cipher)
     re = en.decrypt(cipher)
     utils.show_rgb(re)
@@ -102,17 +125,23 @@ def check_random_trans(path='./img/Lenna.jpg', do_attack=True):
     print(f'SSIM: {mc(rgb, re)}')
 
 def check_arnold(path='./img/Lenna.jpg', do_attack=True):
+    # 读入图片
     rgb = utils.read_rgb(path)
 
+    # 创建加密器
     en = encryptor_registry.build('Arnold')
+
+    # 加密
     cipher = en.encrypt(rgb)
 
+    # 攻击
     if do_attack:
         cipher = attacker_registry.build('RowErase', times=10)(cipher)
         cipher = attacker_registry.build('ColumnErase', times=10)(cipher)
         cipher = attacker_registry.build('PointReplace', times=10)(cipher)
         cipher = attacker_registry.build('BlockSwap', times=10, block_size=8)(cipher)
 
+    # 显示图片
     utils.show_rgb(cipher)
     re = en.decrypt(cipher)
     utils.show_rgb(re)
